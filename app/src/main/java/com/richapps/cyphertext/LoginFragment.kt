@@ -19,8 +19,8 @@ class LoginFragment : Fragment() {
     ): View? {
         binding = FragmentLoginBinding.inflate(layoutInflater)
         binding.continueButton.setOnClickListener {
-            val phoneNumber = binding.phoneNumber.text.toString()
-            if(phoneNumber.isEmpty() || phoneNumber.length != 10) {
+            val number = binding.phoneNumber.text.toString()
+            if(number.isEmpty() || number.length != 10) {
                 Toast.makeText(
                     requireContext(),
                     "Please enter a valid phone number",
@@ -29,7 +29,7 @@ class LoginFragment : Fragment() {
             }
             else {
                 val bundle = Bundle()
-                bundle.putString("phoneNumber", phoneNumber)
+                bundle.putString("number", number)
                 findNavController().navigate(R.id.action_loginFragment_to_OTPFragment, bundle)
                 }
         }
