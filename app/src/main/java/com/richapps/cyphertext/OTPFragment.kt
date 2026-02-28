@@ -58,6 +58,9 @@ class OTPFragment : Fragment() {
                 isSignedIn.collect {
                     if (it) {
                         Toast.makeText(requireContext(), "Login Successful", Toast.LENGTH_SHORT).show()
+                        val bundle = Bundle()
+                        bundle.putString("number", number)
+                        findNavController().navigate(R.id.action_loginFragment_to_userDetail, bundle)
                         // navigate to other screen
                     }
                     else {
@@ -91,6 +94,5 @@ class OTPFragment : Fragment() {
             binding.number.text = "+1 $number"
         }
     }
-
 
 }

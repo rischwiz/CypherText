@@ -54,5 +54,11 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    // Retrofit for networking
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    // GSON converter to turn Kotlin objects into JSON
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    // OkHttp logging (optional, but helps you see what's happening in the logcat)
+    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
 
 }
