@@ -1,4 +1,4 @@
-package com.richapps.cyphertext
+package com.richapps.cyphertext.fragments
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.navigation.fragment.findNavController
+import com.richapps.cyphertext.R
 import com.richapps.cyphertext.databinding.FragmentLoginBinding
 
 class LoginFragment : Fragment() {

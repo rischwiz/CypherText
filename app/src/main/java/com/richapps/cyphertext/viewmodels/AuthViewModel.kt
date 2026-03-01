@@ -1,4 +1,4 @@
-package com.richapps.cyphertext
+package com.richapps.cyphertext.viewmodels
 
 import android.app.Activity
 import androidx.lifecycle.ViewModel
@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.richapps.cyphertext.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.TimeUnit
 
@@ -16,6 +17,15 @@ class AuthViewModel : ViewModel() {
     val otpSent = _otpSent
     private val _isSignedIn = MutableStateFlow<Boolean>(false)
     val isSignedIn = _isSignedIn
+
+    private val _isCurrentUser = MutableStateFlow<Boolean>(false)
+    val isCurrentUser = _isCurrentUser
+
+    init {
+        Utils.getFirebaseAuthInstance().currentUser.let {
+            _isCurrentUser.value = true
+        }
+    }
 
 
 

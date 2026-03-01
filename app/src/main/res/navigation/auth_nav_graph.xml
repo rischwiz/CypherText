@@ -6,7 +6,7 @@
     app:startDestination="@id/splashFragment">
     <fragment
         android:id="@+id/splashFragment"
-        android:name="com.richapps.cyphertext.SplashFragment"
+        android:name="com.richapps.cyphertext.fragments.SplashFragment"
         android:label="fragment_splash"
         tools:layout="@layout/fragment_splash" >
         <action
@@ -15,7 +15,7 @@
     </fragment>
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.richapps.cyphertext.LoginFragment"
+        android:name="com.richapps.cyphertext.fragments.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login" >
         <action
@@ -27,7 +27,7 @@
     </fragment>
     <fragment
         android:id="@+id/OTPFragment"
-        android:name="com.richapps.cyphertext.OTPFragment"
+        android:name="com.richapps.cyphertext.fragments.OTPFragment"
         android:label="fragment_o_t_p"
         tools:layout="@layout/fragment_o_t_p" >
         <action
