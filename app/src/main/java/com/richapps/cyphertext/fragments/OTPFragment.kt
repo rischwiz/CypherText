@@ -62,7 +62,7 @@ class OTPFragment : Fragment() {
                         Toast.makeText(requireContext(), "Login Successful", Toast.LENGTH_SHORT).show()
                         val bundle = Bundle()
                         bundle.putString("number", number)
-                        findNavController().navigate(R.id.action_loginFragment_to_userDetail, bundle)
+                        findNavController().navigate(R.id.action_OTPFragment_to_userDetail, bundle)
                         // navigate to other screen
                     }
                     else {

@@ -1,10 +1,12 @@
 package com.richapps.cyphertext
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.richapps.cyphertext.activities.MainActivity
 import com.richapps.cyphertext.databinding.FragmentUserDetailBinding
 import com.richapps.cyphertext.models.Users
 
@@ -34,6 +36,10 @@ class UserDetail : Fragment() {
             }
             else {
                 val user = Users(userNumber, username)
+                // save user to PostgreSQL database
+                startActivity(Intent(requireContext(), MainActivity::class.java))
+                requireActivity().finishAffinity()
+
             }
             /*
             else {

@@ -22,9 +22,10 @@ class AuthViewModel : ViewModel() {
     val isCurrentUser = _isCurrentUser
 
     init {
-        Utils.getFirebaseAuthInstance().currentUser.let {
+        /*Utils.getFirebaseAuthInstance().currentUser?.let {
             _isCurrentUser.value = true
-        }
+        }*/
+        Utils.getFirebaseAuthInstance().currentUser != null
     }
 
 
