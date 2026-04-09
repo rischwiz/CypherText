@@ -4,11 +4,14 @@ import android.app.Activity
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
 import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.richapps.cyphertext.Utils
+import com.richapps.cyphertext.Utils.getFirebaseAuthInstance
 import com.richapps.cyphertext.models.RegisterResponse
 import com.richapps.cyphertext.network.RegistrationRepository
 import com.richapps.cyphertext.network.RetrofitClient
@@ -25,18 +28,20 @@ class AuthViewModel : ViewModel() {
     val otpSent: StateFlow<Boolean> = _otpSent
 
     private val _isCurrentUser = MutableStateFlow<Boolean>(false)
-    val isCurrentUser: StateFlow<Boolean> = _isCurrentUser
+    val isCurrentUser= _isCurrentUser
 
     init {
-        val user = Utils.getFirebaseAuthInstance().currentUser
-        Log.d("AuthViewModel", "init: currentUser = ${user?.uid}")
-        _isCurrentUser.value = user != null
-    }
-
-    fun signOut() {
-        Utils.getFirebaseAuthInstance().signOut()
-        _isCurrentUser.value = false
-        Log.d("AuthViewModel", "signOut: User signed out")
+//        Utils.getFirebaseAuthInstance().currentUser?.let {
+//            if (Utils.getFirebaseAuthInstance().currentUser != null) {
+//                _isCurrentUser.value = true
+//            }
+//        }
+        val currentUser = Utils.getFirebaseAuthInstance().currentUser
+        Log.d("AuthViewModel", "Current user on init: ${currentUser?.phoneNumber ?: "null"}")
+        Utils.getFirebaseAuthInstance().addAuthStateListener { auth ->
+            _isCurrentUser.value = auth.currentUser != null
+            Log.d("AuthViewModel", "Auth state changed: ${auth.currentUser?.phoneNumber ?: "null"}")
+        }
     }
 
     private val _isSignedIn = MutableStateFlow<Boolean>(false)
@@ -81,17 +86,16 @@ class AuthViewModel : ViewModel() {
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful) {
                     _isSignedIn.value = true
-                    _isCurrentUser.value = true
                 }
             }
     }
 
     // Register the user on the backend
     // Uses viewModelScope to ensure the coroutine is cancelled if the ViewModel is cleared
-    fun registerOnBackend(phoneHash: String, username: String, fcmToken: String) {
+    fun registerOnBackend(phoneNumber: String, username: String, fcmToken: String, firebaseUid: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.register(phoneHash, username, fcmToken)
+            val result = repository.register(phoneNumber, username, fcmToken, firebaseUid)
             _registrationResult.value = result
             _isLoading.value = false
         }

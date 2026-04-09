@@ -15,11 +15,9 @@ import com.richapps.cyphertext.databinding.FragmentOTPBinding
 import kotlinx.coroutines.launch
 
 class OTPFragment : Fragment() {
-
     lateinit var binding : FragmentOTPBinding
     private val viewModel : AuthViewModel by viewModels()
     lateinit var number : String
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -33,13 +31,28 @@ class OTPFragment : Fragment() {
         onBackButtonPressed()
         return binding.root
     }
-
-    private fun onBackButtonPressed() {
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigate(R.id.action_OTPFragment_to_loginFragment)
+    private fun getUserNumber() {
+        val bundle = arguments
+        if (bundle != null) {
+            number = bundle.getString("number").toString()
+            binding.number.text = "+1 $number"
         }
     }
-    
+    private fun sendOTP() {
+        viewModel.apply {
+            sendOTP(number, requireActivity())
+            lifecycleScope.launch {
+                otpSent.collect {
+                    if(it) {
+                        Toast.makeText(requireContext(), "OTP Sent", Toast.LENGTH_SHORT).show()
+                    }
+                    else {
+                        Toast.makeText(requireContext(), "OTP Not Sent", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
     private fun onLoginButtonClicked() {
         binding.continueButton.setOnClickListener {
             val otp = binding.etOtp.text.toString()
@@ -52,7 +65,6 @@ class OTPFragment : Fragment() {
             }
         }
     }
-
     private fun verifyOTP(otp : String) {
         viewModel.apply {
             signInWithPhoneAuthCredential(otp, requireActivity())
@@ -72,29 +84,9 @@ class OTPFragment : Fragment() {
             }
         }
     }
-
-    private fun sendOTP() {
-        viewModel.apply {
-            sendOTP(number, requireActivity())
-            lifecycleScope.launch {
-                otpSent.collect {
-                    if(it) {
-                        Toast.makeText(requireContext(), "OTP Sent", Toast.LENGTH_SHORT).show()
-                    }
-                    else {
-                        Toast.makeText(requireContext(), "OTP Not Sent", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+    private fun onBackButtonPressed() {
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigate(R.id.action_OTPFragment_to_loginFragment)
         }
     }
-
-    private fun getUserNumber() {
-        val bundle = arguments
-        if (bundle != null) {
-            number = bundle.getString("number").toString()
-            binding.number.text = "+1 $number"
-        }
-    }
-
 }

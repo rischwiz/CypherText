@@ -6,6 +6,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.firebase.FirebaseApp
 import com.richapps.cyphertext.R
 import com.richapps.cyphertext.databinding.ActivityMainBinding
 import com.richapps.cyphertext.fragments.ChatFragment

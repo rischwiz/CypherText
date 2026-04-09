@@ -7,11 +7,11 @@ import kotlinx.coroutines.withContext
 
 class RegistrationRepository(private val apiService: ApiService) {
 
-    suspend fun register(phoneHash: String, username: String, fcmToken: String): Result<RegisterResponse> {
+    suspend fun register(phoneNumber: String, username: String, fcmToken: String, firebaseUid: String): Result<RegisterResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.registerUser(
-                    RegisterRequest(phoneHash, username, fcmToken)
+                    RegisterRequest(phoneNumber, username, fcmToken, firebaseUid)
                 )
                 if (response.isSuccessful) {
                     Result.success(response.body()!!)

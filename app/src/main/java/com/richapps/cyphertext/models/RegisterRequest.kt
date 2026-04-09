@@ -5,9 +5,10 @@ import com.google.gson.annotations.SerializedName
 // Request model for user registration.
 // Backend expects: phoneHash, userName, fcmToken
 data class RegisterRequest(
-    @SerializedName("phoneHash") val phoneHash: String,
-    @SerializedName("userName") val userName: String,
-    @SerializedName("fcmToken") val fcmToken: String
+    @SerializedName("phoneNumber") val phoneNumber: String,
+    @SerializedName("username") val userName: String,
+    @SerializedName("fcmToken") val fcmToken: String,
+    @SerializedName("firebaseUid") val firebaseUid: String
 )
 
 // Response model for user registration.

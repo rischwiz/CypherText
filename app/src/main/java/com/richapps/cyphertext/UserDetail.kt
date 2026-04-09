@@ -1,7 +1,9 @@
 package com.richapps.cyphertext
 
+import android.R.attr.phoneNumber
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -9,11 +11,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.richapps.cyphertext.Utils.SERVER_URL
 import com.richapps.cyphertext.activities.MainActivity
 import com.richapps.cyphertext.databinding.FragmentUserDetailBinding
 import com.richapps.cyphertext.models.Users
+import com.richapps.cyphertext.security.KeyStoreManager
 import com.richapps.cyphertext.viewmodels.AuthViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class UserDetail : Fragment() {
 
@@ -21,7 +28,6 @@ class UserDetail : Fragment() {
     private val viewModel: AuthViewModel by viewModels()
     var username = ""
     var userNumber = ""
-    //var userID = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,12 +40,22 @@ class UserDetail : Fragment() {
 
         return binding.root
     }
-
     private fun setupObservers() {
         // Observe registration success/failure
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.registrationResult.collectLatest { result ->
-                result?.onSuccess {
+                result?.onSuccess { response ->
+                    Log.d("UserDetail", "Registration successful!")
+                    Log.d("UserDetail", "userId from server: ${response?.userId}")
+                    response?.userId?.let { id ->
+                        Utils.saveCurrentUserDbId(id)
+                        Log.d("UserDetail", "Saved userId to SharedPreferences: $id")
+
+                        // Confirm it was saved correctly
+                        Log.d("UserDetail", "Retrieved userId from SharedPreferences: ${Utils.getCurrentUserDbId()}")
+
+                        uploadIdentityKey(id)
+                    }
                     // Navigate to MainActivity only when registration is confirmed
                     startActivity(Intent(requireContext(), MainActivity::class.java))
                     requireActivity().finishAffinity()
@@ -56,8 +72,6 @@ class UserDetail : Fragment() {
             }
         }
     }
-
-
     private fun getDetails() {
         val bundle = arguments
         userNumber = bundle!!.getString("number").toString()
@@ -71,23 +85,50 @@ class UserDetail : Fragment() {
                 // TODO: 1. Generate phoneHash (SHA-256) from userNumber
                 // TODO: 2. GEt real fcmToken (FirebaseMessaging.getInstance().token)
                 val mockFcmToken = "mock_token_123"
-                val phoneHash = userNumber // Replace with actual phone hash generation
-                viewModel.registerOnBackend(phoneHash, username, mockFcmToken)
-            }
+                val phoneNumber = userNumber // Replace with actual phone hash generation
+                val firebaseUid = Utils.getUserID()
 
-            /*
-                val user = Users(userNumber, username)
-                // save user to PostgreSQL database
-                startActivity(Intent(requireContext(), MainActivity::class.java))
-                requireActivity().finishAffinity()
+                viewModel.registerOnBackend(phoneNumber, username, mockFcmToken, firebaseUid)
             }
-            else {
-                val user = Users(userID, userNumber, username)
-                // save user to PostgreSQL database
-            }
-            */
         }
-        //userID = Utils.getUserID()
-        //binding.etUsername
+    }
+
+    private fun uploadIdentityKey(userId: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val publicKey = KeyStoreManager.getIdentityPublicKey()
+                val base64Key = android.util.Base64.encodeToString(publicKey, android.util.Base64.NO_WRAP)
+
+                val url = java.net.URL("${SERVER_URL}/keys/identity")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json")
+                    doOutput = true
+                    connectTimeout = 5000
+                    readTimeout = 5000
+                }
+
+                val body = org.json.JSONObject().apply {
+                    put("userId", userId)
+                    put("publicKey", base64Key)
+                }
+
+                connection.outputStream.use { os ->
+                    os.write(body.toString().toByteArray())
+                }
+
+                val responseCode = connection.responseCode
+                if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                    android.util.Log.d("UserDetail", "Identity key uploaded successfully")
+                }
+                else {
+                    android.util.Log.d("UserDetail", "Failed to upload identity key: $responseCode")
+                }
+                connection.disconnect()
+            } catch (e: Exception) {
+                android.util.Log.d("UserDetail", "Error uploading identity key: ${e.message}")
+            }
+        }
     }
 }
