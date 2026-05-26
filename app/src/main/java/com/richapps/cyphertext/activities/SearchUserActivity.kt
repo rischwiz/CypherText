@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.richapps.cyphertext.R
+import com.richapps.cyphertext.Utils
 import com.richapps.cyphertext.adapters.SearchUserAdapter
 import com.richapps.cyphertext.databinding.ActivitySearchUserBinding
 import com.richapps.cyphertext.models.Users
@@ -24,7 +25,7 @@ class SearchUserActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySearchUserBinding
     private lateinit var adapter: SearchUserAdapter
-    private val serverUrl = "http://10.0.2.2:3000"
+    private val serverUrl = Utils.SERVER_URL
 
 
 

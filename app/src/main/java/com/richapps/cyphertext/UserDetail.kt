@@ -11,16 +11,20 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import android.util.Base64
 import com.richapps.cyphertext.Utils.SERVER_URL
 import com.richapps.cyphertext.activities.MainActivity
 import com.richapps.cyphertext.databinding.FragmentUserDetailBinding
 import com.richapps.cyphertext.models.Users
+import com.richapps.cyphertext.network.KeyBundleUploader
 import com.richapps.cyphertext.security.KeyStoreManager
 import com.richapps.cyphertext.viewmodels.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.net.HttpURLConnection
 
 class UserDetail : Fragment() {
 
@@ -40,8 +44,7 @@ class UserDetail : Fragment() {
 
         return binding.root
     }
-    private fun setupObservers() {
-        // Observe registration success/failure
+    private fun setupObservers() { // Observe registration success/failure
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.registrationResult.collectLatest { result ->
                 result?.onSuccess { response ->
@@ -55,8 +58,8 @@ class UserDetail : Fragment() {
                         Log.d("UserDetail", "Retrieved userId from SharedPreferences: ${Utils.getCurrentUserDbId()}")
 
                         uploadIdentityKey(id)
+
                     }
-                    // Navigate to MainActivity only when registration is confirmed
                     startActivity(Intent(requireContext(), MainActivity::class.java))
                     requireActivity().finishAffinity()
                 }?.onFailure { error ->
@@ -65,7 +68,6 @@ class UserDetail : Fragment() {
             }
         }
 
-        // Observe loading state to show/hide a progress bar if you have one
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.isLoading.collectLatest { isLoading ->
                 binding.continueButton.isEnabled = !isLoading
@@ -85,7 +87,7 @@ class UserDetail : Fragment() {
                 // TODO: 1. Generate phoneHash (SHA-256) from userNumber
                 // TODO: 2. GEt real fcmToken (FirebaseMessaging.getInstance().token)
                 val mockFcmToken = "mock_token_123"
-                val phoneNumber = userNumber // Replace with actual phone hash generation
+                val phoneNumber = userNumber
                 val firebaseUid = Utils.getUserID()
 
                 viewModel.registerOnBackend(phoneNumber, username, mockFcmToken, firebaseUid)
@@ -97,10 +99,15 @@ class UserDetail : Fragment() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val publicKey = KeyStoreManager.getIdentityPublicKey()
-                val base64Key = android.util.Base64.encodeToString(publicKey, android.util.Base64.NO_WRAP)
+                val base64Key = Base64.encodeToString(publicKey, Base64.NO_WRAP)
 
-                val url = java.net.URL("${SERVER_URL}/keys/identity")
-                val connection = url.openConnection() as java.net.HttpURLConnection
+                val signedPreKey = KeyStoreManager.generateAndSaveSignedPreKey(requireContext())
+                val base64SignedPreKey = Base64.encodeToString(
+                    signedPreKey.publicKey.serialize(), Base64.NO_WRAP
+                )
+
+                val url = java.net.URL("${Utils.SERVER_URL}/keys/identity")
+                val connection = url.openConnection() as HttpURLConnection
                 connection.apply {
                     requestMethod = "POST"
                     setRequestProperty("Content-Type", "application/json")
@@ -109,9 +116,10 @@ class UserDetail : Fragment() {
                     readTimeout = 5000
                 }
 
-                val body = org.json.JSONObject().apply {
+                val body = JSONObject().apply {
                     put("userId", userId)
                     put("publicKey", base64Key)
+                    put("signedPreKey", base64SignedPreKey)
                 }
 
                 connection.outputStream.use { os ->
@@ -119,15 +127,15 @@ class UserDetail : Fragment() {
                 }
 
                 val responseCode = connection.responseCode
-                if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
-                    android.util.Log.d("UserDetail", "Identity key uploaded successfully")
-                }
-                else {
-                    android.util.Log.d("UserDetail", "Failed to upload identity key: $responseCode")
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    Log.d("UserDetail", "Identity key uploaded successfully")
+                    KeyBundleUploader.uploadOneTimePreKeys(userId, requireContext())
+                } else {
+                    Log.e("UserDetail", "Failed to upload identity key: $responseCode")
                 }
                 connection.disconnect()
             } catch (e: Exception) {
-                android.util.Log.d("UserDetail", "Error uploading identity key: ${e.message}")
+                Log.e("UserDetail", "Error uploading identity key: ${e.message}")
             }
         }
     }

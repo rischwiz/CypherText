@@ -27,18 +27,11 @@ class AuthViewModel : ViewModel() {
     private val _otpSent = MutableStateFlow<Boolean>(false)
     val otpSent: StateFlow<Boolean> = _otpSent
 
-    private val _isCurrentUser = MutableStateFlow<Boolean>(false)
+    private val _isCurrentUser = MutableStateFlow<Boolean?>(null)
     val isCurrentUser= _isCurrentUser
 
     init {
-//        Utils.getFirebaseAuthInstance().currentUser?.let {
-//            if (Utils.getFirebaseAuthInstance().currentUser != null) {
-//                _isCurrentUser.value = true
-//            }
-//        }
-        val currentUser = Utils.getFirebaseAuthInstance().currentUser
-        Log.d("AuthViewModel", "Current user on init: ${currentUser?.phoneNumber ?: "null"}")
-        Utils.getFirebaseAuthInstance().addAuthStateListener { auth ->
+        Utils.getFirebaseAuthInstance().addAuthStateListener { auth -> // Listen for auth state changes
             _isCurrentUser.value = auth.currentUser != null
             Log.d("AuthViewModel", "Auth state changed: ${auth.currentUser?.phoneNumber ?: "null"}")
         }
@@ -71,10 +64,10 @@ class AuthViewModel : ViewModel() {
         }
 
         val options = PhoneAuthOptions.newBuilder(Utils.getFirebaseAuthInstance())
-            .setPhoneNumber("+1$phoneNumber") // Phone number to verify
-            .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-            .setActivity(activity) // Activity (for callback binding)
-            .setCallbacks(callbacks) // OnVerificationStateChangedCallbacks
+            .setPhoneNumber("+1$phoneNumber")
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(callbacks)
             .build()
         PhoneAuthProvider.verifyPhoneNumber(options)
 
@@ -90,8 +83,6 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    // Register the user on the backend
-    // Uses viewModelScope to ensure the coroutine is cancelled if the ViewModel is cleared
     fun registerOnBackend(phoneNumber: String, username: String, fcmToken: String, firebaseUid: String) {
         viewModelScope.launch {
             _isLoading.value = true

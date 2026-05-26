@@ -1,13 +1,13 @@
 package com.richapps.cyphertext.network
 
+import com.richapps.cyphertext.Utils
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // 10.0.2.2 is the special alias for your host machine's local host from the Android Emulator.
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    private const val BASE_URL = Utils.SERVER_URL
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

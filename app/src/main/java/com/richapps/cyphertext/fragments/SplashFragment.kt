@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.richapps.cyphertext.databinding.FragmentSplashBinding
 import com.richapps.cyphertext.R
 import com.richapps.cyphertext.activities.MainActivity
@@ -24,6 +25,8 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.filterNotNull
 
 
 class SplashFragment : Fragment() {
@@ -31,45 +34,30 @@ class SplashFragment : Fragment() {
     private val viewModel : AuthViewModel by viewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentSplashBinding.inflate(layoutInflater)
 
         lifecycleScope.launch {
+            Log.d("Splash", "coroutine started")
+            val minSplashTime = launch { delay(2500) }
+            Log.d("Splash", "delay finished")
 
-            lifecycleScope.launch {
-                Log.d("Splash", "coroutine started")
-                kotlinx.coroutines.delay(3000) // give Firebase more time to restore session
-                Log.d("Splash", "delay finished")
+            val isLoggedIn = viewModel.isCurrentUser
+                .filterNotNull()
+                .first()
 
-                // Take first emission after delay
-                val isLoggedIn = viewModel.isCurrentUser.value  // read current value directly
-                Log.d("Splash", "isLoggedIn: $isLoggedIn")
+            minSplashTime.join()
+            if (!isAdded) return@launch
 
-                if (isLoggedIn) {
-                    startActivity(Intent(requireContext(), MainActivity::class.java))
-                    requireActivity().finish()
-                } else {
-                    findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
-                }
+            if (isLoggedIn) {
+                startActivity(Intent(requireContext(), MainActivity::class.java))
+                requireActivity().finish()
+            } else {
+                findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
             }
-
-//            val minDelay = async { delay(2500) }
-//
-//            val isLoggedIn = viewModel.isCurrentUser
-//                .drop(1)
-//                .first()
-//
-//            minDelay.await()
-//
-//            if (isLoggedIn) {
-//                startActivity(Intent(requireContext(), MainActivity::class.java))
-//                requireActivity().finish()
-//            }
-//            else {
-//                findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
-//            }
         }
 
         return binding.root
